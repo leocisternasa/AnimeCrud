@@ -8,7 +8,18 @@ const dataFile = "anime.json";
 app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
+
+//funcionhelper
+
+const readFile = async () => {
+  let data = readFileSync(dataFile, "utf8");
+  let animes = JSON.parse(data);
+  return animes;
+};
+
 //rutas
+
+//Endpoint para probar que el servidor este arriba
 
 app.get("/", async (req, res) => {
   try {
@@ -20,8 +31,7 @@ app.get("/", async (req, res) => {
 
 //Endpoint lista todos los animes
 app.get("/animes", async (req, res) => {
-  let data = readFileSync(dataFile, "utf8");
-  let animes = JSON.parse(data);
+  const animes = await readFile();
   res.status(200).json(animes);
 });
 
@@ -29,8 +39,7 @@ app.get("/animes", async (req, res) => {
 app.get("/animes/search", async (req, res) => {
   try {
     const { nombre } = req.query;
-    let data = readFileSync(dataFile, "utf8");
-    let animes = JSON.parse(data);
+    const animes = await readFile();
     let animeFound = false;
     for (const animeId in animes) {
       if (animes[animeId].nombre == nombre) {
@@ -48,9 +57,7 @@ app.get("/animes/search", async (req, res) => {
 app.get("/animes/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const data = readFileSync(dataFile, "utf8");
-    let animes = JSON.parse(data);
-    console.log(id);
+    const animes = await readFile();
     if (!animes[id]) throw new Error();
     res.status(200).json(animes[id]);
   } catch (error) {
@@ -59,10 +66,9 @@ app.get("/animes/:id", async (req, res) => {
 });
 
 //Endpoint crear anime
-app.post("/animes", (req, res) => {
+app.post("/animes", async (req, res) => {
+  let animes = await readFile();
   const { nombre, genero, año, autor } = req.body;
-  const data = readFileSync(dataFile, "utf8");
-  let animes = JSON.parse(data);
   const keys = Object.keys(animes);
   const id = keys.length + 1;
   let anime = { [id]: { nombre, genero, año, autor } };
@@ -74,8 +80,7 @@ app.post("/animes", (req, res) => {
 app.delete("/animes/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const data = readFileSync(dataFile, "utf8");
-    let animes = JSON.parse(data);
+    const animes = await readFile();
     if (!animes[id]) throw new Error();
     let animeKeys = Object.keys(animes);
     let animeFilter = animeKeys.filter((animeId) => animeId != id);
@@ -91,8 +96,7 @@ app.delete("/animes/:id", async (req, res) => {
 app.put("/animes", async (req, res) => {
   try {
     const { nombre, genero, año, autor, id } = req.body;
-    const data = readFileSync(dataFile, "utf8");
-    let animes = JSON.parse(data);
+    const animes = await readFile();
     console.log(id);
     if (!animes[id]) throw new Error();
     const animeUpdated = { [id]: { nombre, genero, año, autor } };
