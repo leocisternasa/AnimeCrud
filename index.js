@@ -10,6 +10,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //rutas
 
+app.get("/", async (req, res) => {
+  try {
+    res.json({ message: "El servidor esta funcionando" });
+  } catch (error) {
+    res.status(400).json({ message: "Hubo un error al levantar el servidor" });
+  }
+});
+
 //Endpoint lista todos los animes
 app.get("/animes", async (req, res) => {
   let data = readFileSync(dataFile, "utf8");
@@ -96,4 +104,6 @@ app.put("/animes", async (req, res) => {
   }
 });
 
-app.listen(PORT, console.log("Corriendo en el puerto " + PORT));
+app.listen(PORT, () => console.log("Corriendo en el puerto " + PORT));
+
+export default app;
