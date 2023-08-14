@@ -39,17 +39,16 @@ app.get("/animes", async (req, res) => {
 app.get("/animes/search", async (req, res) => {
   try {
     const { nombre } = req.query;
+    if (!nombre) throw new Error();
     const animes = await readFile();
-    let animeFound = false;
-    for (const animeId in animes) {
-      if (animes[animeId].nombre == nombre) {
-        animeFound = true;
-        return res.status(200).json(animes[animeId]);
-      }
+    let anime = Object.values(animes).find((anime) => anime.nombre === nombre);
+    if (anime) {
+      res.status(200).json(anime);
+    } else {
+      res.status(404).send("El anime que buscas no existe");
     }
-    if (animeFound === false) throw new Error();
   } catch (error) {
-    res.status(404).send("El anime que buscas no existe");
+    res.status(400).send("Falta el nombre para realizar la busqueda");
   }
 });
 
@@ -67,21 +66,31 @@ app.get("/animes/:id", async (req, res) => {
 
 //Endpoint crear anime
 app.post("/animes", async (req, res) => {
-  let animes = await readFile();
-  const { nombre, genero, año, autor } = req.body;
-  const keys = Object.keys(animes);
-  const id = keys.length + 1;
-  let anime = { [id]: { nombre, genero, año, autor } };
-  animes = { ...animes, ...anime };
-  fs.writeFileSync(dataFile, JSON.stringify(animes), "utf8");
-  res.status(201).send("Anime creado con exito");
+  try {
+    let animes = await readFile();
+    const { nombre, genero, año, autor } = req.body;
+    console.log(animes);
+    if (!nombre || !genero || !año || !autor) throw new Error();
+    const keys = Object.keys(animes);
+    const id = keys.length + 1;
+    let anime = { [id]: { nombre, genero, año, autor } };
+    animes = { ...animes, ...anime };
+    fs.writeFileSync(dataFile, JSON.stringify(animes), "utf8");
+    res.status(201).send("Anime creado con exito");
+  } catch (error) {
+    res.status(400).send("faltan datos para la creacion del nuevo anime");
+  }
 });
 
 app.delete("/animes/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!id) throw new Error();
     const animes = await readFile();
-    if (!animes[id]) throw new Error();
+    if (!animes[id])
+      res
+        .status(404)
+        .json({ error: "El anime que quieres eliminar no existe" });
     let animeKeys = Object.keys(animes);
     let animeFilter = animeKeys.filter((animeId) => animeId != id);
     let animePairs = animeFilter.map((animeId) => [animeId, animes[animeId]]);
@@ -89,22 +98,24 @@ app.delete("/animes/:id", async (req, res) => {
     fs.writeFileSync(dataFile, JSON.stringify(animesUpdated), "utf8");
     res.status(200).send("Anime eliminado con exito");
   } catch (error) {
-    res.status(404).json({ error: "El anime que quieres eliminar no existe" });
+    res.status(400).send("Falta el param string ID para realizar la busqueda");
   }
 });
 
 app.put("/animes", async (req, res) => {
   try {
     const { nombre, genero, año, autor, id } = req.body;
+    if (!nombre || !genero || !año || !autor || !id) throw new Error();
     const animes = await readFile();
     console.log(id);
-    if (!animes[id]) throw new Error();
+    if (!animes[id])
+      res.status(404).send("El anime que intentas actualizar no existe");
     const animeUpdated = { [id]: { nombre, genero, año, autor } };
     const animesUpdate = { ...animes, ...animeUpdated };
     fs.writeFileSync(dataFile, JSON.stringify(animesUpdate), "utf8");
     res.status(200).send("Anime actualizado con exito");
   } catch (error) {
-    res.status(404).send("El anime que intentas actualizar no existe");
+    res.status(400).send("faltan datos para la actualizacion del nuevo anime");
   }
 });
 
